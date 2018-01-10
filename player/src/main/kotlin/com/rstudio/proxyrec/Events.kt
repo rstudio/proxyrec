@@ -147,17 +147,17 @@ sealed class Event(open val created: Long) {
                 it.addListener(object : WebSocketAdapter() {
                     override fun onTextMessage(sock: WebSocket, msg: String) {
                         if (canIgnore(msg)) {
-                            session.log.debug { "%%% Ignoring $msg" }
+                            //session.log.debug { "%%% Ignoring $msg" }
                         } else {
-                            session.log.debug { "%%% Received: $msg" }
+                            //session.log.debug { "%%% Received: $msg" }
                             if (!session.receiveQueue.offer(session.replaceTokens(msg))) {
                                 throw Exception("receiveQueue is full (max = ${session.receiveQueueSize})")
                             }
                         }
                     }
 
-                    override fun onStateChanged(websocket: WebSocket?, newState: WebSocketState?) =
-                            session.log.debug { "%%% State $newState" }
+                    //override fun onStateChanged(websocket: WebSocket?, newState: WebSocketState?) =
+                            //session.log.debug { "%%% State $newState" }
                 })
                 it.connect()
             }
@@ -168,7 +168,7 @@ sealed class Event(open val created: Long) {
                   val message: String) : Event(created) {
         override fun handle(session: ShinySession) {
             val receivedStr = session.waitForMessage()
-            session.log.debug { "WS_RECV received: $receivedStr" }
+            //session.log.debug { "WS_RECV received: $receivedStr" }
             // Because the messages in our log file are extra-escaped, we need to unescape once.
             val expectingStr = session.replaceTokens(unescape(message))
             val expectingObj = parseMessage(expectingStr)
@@ -189,7 +189,7 @@ sealed class Event(open val created: Long) {
                        val message: String) : Event(created) {
         override fun handle(session: ShinySession) {
             val receivedStr = session.waitForMessage()
-            session.log.debug { "WS_RECV_INIT received: $receivedStr" }
+            //session.log.debug { "WS_RECV_INIT received: $receivedStr" }
 
             val sessionId = parseMessage(receivedStr)
                     ?.get("config")
@@ -199,7 +199,7 @@ sealed class Event(open val created: Long) {
                     ?: throw IllegalStateException("Expected sessionId from WS_RECV_INIT message")
 
             session.tokenDictionary["SESSION"] = sessionId
-            session.log.debug { "WS_RECV_INIT got SESSION: ${session.tokenDictionary["SESSION"]}" }
+            //session.log.debug { "WS_RECV_INIT got SESSION: ${session.tokenDictionary["SESSION"]}" }
         }
     }
 
@@ -211,7 +211,7 @@ sealed class Event(open val created: Long) {
         override fun handle(session: ShinySession) {
             val text = session.replaceTokens(unescape(message))
             session.webSocket!!.sendText(text)
-            session.log.debug { "WS_SEND sent: $text" }
+            //session.log.debug { "WS_SEND sent: $text" }
         }
     }
 }

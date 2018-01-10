@@ -130,7 +130,9 @@ class ShinySession(val sessionId: Int,
             //log.debug { "iteration = $i" }
             if (script.size > 0) {
                 val currentEvent = script.get(0)
-                Thread.sleep(currentEvent.sleepBefore(this))
+		if (currentEvent.sleepBefore(this) > 0){
+                  Thread.sleep(currentEvent.sleepBefore(this))
+                }
                 currentEvent.handle(this)
                 // Things we're writing to each line of the log:
                 // Step #, Event type, Sleep time (ms), Elapsed time (ms), Finished timestamp (epoch ms), Finished timestamp (ISO datestime), Succeeded (true/false)
@@ -141,6 +143,9 @@ class ShinySession(val sessionId: Int,
             } else {
                 throw IllegalStateException("Can't step, out of events")
             }
+	    if (i == iterations-1) {
+		log.debug {"finished"}
+            }
         }
     }
 
@@ -149,7 +154,7 @@ class ShinySession(val sessionId: Int,
     }
 
     fun end() {
-        log.debug { "Ending session" }
+        //log.debug { "Ending session" }
         // TODO either assert that there are no pending inbound messages, OR warn about them?
         webSocket?.sendClose()
     }
@@ -187,7 +192,11 @@ class LoadTest(val httpUrl: String,
                         5000,
                         500000000)
                 try {
+		    logger.debug {"started $i"}
                     session.run()
+		} catch (e: Exception) {
+		    logger.debug {"failed $i"}
+		    logger.debug {"Error $e.message"}
                 } finally {
                     session.end()
                 }
@@ -204,7 +213,7 @@ class Args(parser: ArgParser) {
     val outputDir by parser.storing("Path to directory to store session logs in for this test run")
 }
 
-fun _main(args: Array<String>) = mainBody("player") {
+fun main(args: Array<String>) = mainBody("player") {
     Args(ArgParser(args)).run {
         val output = File(outputDir)
         check(!output.exists()) { "Output dir already exists" }
@@ -215,7 +224,7 @@ fun _main(args: Array<String>) = mainBody("player") {
 }
 
 //fun main(args: Array<String>) = _main(args)
-fun main(args: Array<String>) {
+fun _main(args: Array<String>) {
     if (System.getProperty("user.name") == "alandipert") {
         _main(arrayOf("--output-dir", "test-${Instant.now()}", "--sessions", "1", "--app-url", "http://localhost:8080/content/1/", "hello-connect.log"))
     } else {
